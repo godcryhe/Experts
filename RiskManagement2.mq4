@@ -499,70 +499,129 @@ void CheckHistoryRRratio()
   }
 
 /*
-  The function is to modify order's stoploss or and take profit
-  rule: only reduce stoploss and increase take profit    
+  The function is to modify order's stoploss
+  rule: only reduce stoploss    
 */  
 
-void   ModifySLTP()
-  {
-    int ticket = 74212692;
-    double new_sl = 1.2810;
-    double new_tp = 1.2890;
-    int order_type = 0;
-    
+void   ModifySL(int ticket,double sl)
+{
+        
     if ( OrderSelect(ticket,SELECT_BY_TICKET) )
     {
-      order_type = OrderType();
+     int    order_type = OrderType();
+     double digits = NormalizeDouble( MarketInfo( OrderSymbol(), MODE_DIGITS ),0 );
+     //Print("Digits: ",digits);
+     double new_sl = NormalizeDouble(sl,digits);
+     double old_sl = OrderStopLoss();
+      
       if( (order_type == OP_BUY) || (order_type == OP_BUYLIMIT) || (order_type == OP_BUYSTOP) )
       { 
-        if(new_sl >= OrderStopLoss())
+        if( new_sl > old_sl)
         {
-          if(new_tp >= OrderTakeProfit())
-          {
-            if(OrderModify(ticket,OrderOpenPrice(),new_sl,new_tp,0,Blue))
-              Print("Stoploss and Take Profits are modified", new_sl, new_tp);
+            if(OrderModify(ticket,OrderOpenPrice(),new_sl,OrderTakeProfit(),0,Red))
+              Print("Stoploss has been modified---->",new_sl);
             else
               Print("Error in OrderModify. Error code=",GetLastError());   
-          }
-          else
-          { 
-            if(OrderModify(ticket,OrderOpenPrice(),new_sl,OrderTakeProfit(),0,Blue))
-              Print("Stoploss is modified", new_sl);
-            else
-              Print("Error in OrderModify. Error code=",GetLastError());              
-          }
         }
-        else
-          Print("Risk Managment Rule: can not increase Stoploss!");
+        
+        else if(new_sl == old_sl)
+               Print("StopLoss is same!");
+             else  
+               Print("Against Risk Managment Rule: increase Stoploss can not modify Stoploss!");
       }
       
       else
       {
-        if(new_sl <= OrderStopLoss())
+        if( new_sl < old_sl)
         {
-          if(new_tp <= OrderTakeProfit())
-          {
-            if(OrderModify(ticket,OrderOpenPrice(),new_sl,new_tp,0,Blue))
-              Print("Stoploss and Take Profits are modified", new_sl, new_tp);
+            if(OrderModify(ticket,OrderOpenPrice(),new_sl,OrderTakeProfit(),0,Red))
+              Print("Stoploss has been modified---->",new_sl);
             else
               Print("Error in OrderModify. Error code=",GetLastError());   
-          }
-          else
-          { 
-            if(OrderModify(ticket,OrderOpenPrice(),new_sl,OrderTakeProfit(),0,Blue))
-              Print("Stoploss is modified", new_sl);
-            else
-              Print("Error in OrderModify. Error code=",GetLastError());              
-          }
         }
-        else
-          Print("Risk Managment Rule: can not increase Stoploss!");         
-      }      
+        
+        else if(new_sl == old_sl)
+               Print("StopLoss is same!");
+             else  
+               Print("Against Risk Managment Rule: increase Stoploss can not modify Stoploss!");  
+      }
     }
-    else  
-    { 
+    else   
       Print("there is no order by this ticket: ", ticket);
+   
+   return;   
+}
+
+
+/*
+  The function is to take profit
+  rule: only increase take profit    
+*/  
+
+void   ModifyTP(int ticket,double tp)
+{
+    if ( OrderSelect(ticket,SELECT_BY_TICKET) )
+    {
+     int    order_type = OrderType();
+     double digits = NormalizeDouble( MarketInfo( OrderSymbol(), MODE_DIGITS ),0 );
+     double new_tp = NormalizeDouble(tp,digits);
+     double old_tp = OrderTakeProfit();
+      
+      if( (order_type == OP_BUY) || (order_type == OP_BUYLIMIT) || (order_type == OP_BUYSTOP) )
+      { 
+        if( new_tp > old_tp)
+        {
+            if(OrderModify(ticket,OrderOpenPrice(),OrderStopLoss(),new_tp,0,Blue))
+              Print("Take Profit has been modified---->",new_tp);
+            else
+              Print("Error in OrderModify. Error code=",GetLastError());   
+        }
+        
+        else if(new_tp == old_tp)
+               Print("Take Profit is same!");
+             else  
+               Print("Against Risk Managment Rule: can not decrease Take Profit!");
+      }
+      
+      else
+      {
+        if( new_tp < old_tp)
+        {
+            if(OrderModify(ticket,OrderOpenPrice(),OrderStopLoss(),new_tp,0,Blue))
+              Print("Take Profit has been modified---->",new_tp);
+            else
+              Print("Error in OrderModify. Error code=",GetLastError());   
+        }
+        
+        else if(new_tp == old_tp)
+               Print("Take Profit is same!");
+             else  
+               Print("Against Risk Managment Rule: can not decrease Take Profit!");  
+      }
     }
+    else   
+      Print("there is no order by this ticket: ", ticket);
+   
+   return;     
+}
+
+
+/*
+  The function is to modify order's stoploss or and take profit
+  rule: only reduce stoploss and increase take profit    
+*/  
+
+void   Modify()
+  {
+    int ticket = 74212692;
+    double new_sl = 1.2822;
+    double new_tp = 1.2985;
+    int order_type = 0;
+    double digits = 0;
+    
+    ModifySL(ticket,new_sl);
+    ModifyTP(ticket,new_tp);
+    
 
   }
 
@@ -614,14 +673,14 @@ void OnTick()
    //Rule
    //CheckHistoryRRratio();
    
-   ModifySLTP();
+   Modify();
    
    
    //Rule 1
    CheckStopLossTakeProfit();
    
    //Rule 2
-   CheckRiskperTrade();
+   //CheckRiskperTrade();
    
    //Rule 12
    //CheckRRRatio();   
